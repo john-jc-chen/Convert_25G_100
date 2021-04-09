@@ -1,0 +1,19 @@
+COM Port:COM6
+CMM IP:172.31.34.18
+CMM Password:Super123
+Place:A2
+Change Value:B8
+Board Product Name:25G Ethernet Switch
+Product Name:25G Ethernet Switch
+Product PartNum:SBM-25G-100
+Switch Password:WXECJZNQIK
+IP:192.168.0.207
+Mask:255.255.255.0
+Gateway:192.168.0.1
+
+
+
+
+
+
+

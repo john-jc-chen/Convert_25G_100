@@ -5,6 +5,7 @@ import re
 import os
 #import logging
 from datetime import datetime
+from Write_FRU_Field import Write_FRU
 
 import _thread
 
@@ -13,26 +14,18 @@ write_able = False
 
 username = "ADMIN"
 passwd = "ADMIN"
-new_passwd = ''
 comport = "COM5"
 baudrate = "9600"
-bootloader = ""
-firmware = ""
-customer = ""
-IP = ''
+FRU_fields ={}
 config_file = sys.argv[1]
-f = open(config_file, 'r')
-#of = open("command_log.txt", 'w')
-commands = f.readlines()
+with open(config_file, 'r') as file:
+    for comm in file.readlines():
+        if comm.startswith("COM Port:"):
+            comport = comm.split(':')[1].rstrip()
+            break
 
-for comm in commands:
-    if comm.startswith("COM Port:"):
-        comport = comm[9:].rstrip()
-    elif comm.startswith("Baud Rate:"):
-        baudrate = comm[10:].rstrip()
-    else:
-        pass
-f.close()
+#print(comport, username, mask, Part_Num)
+
 serialPort = serial_rx_tx.SerialPort()
 
 def OnReceiveSerialData():
@@ -54,7 +47,7 @@ def login(username, passwd):
         print(data)
         data = serialPort.serialport.readline().decode("utf-8", errors='ignore')
     print(data)
-    time.sleep(20.0)
+    time.sleep(3.0)
     serialPort.Send("")
     serialPort.Send("")
     serialPort.Send("")
@@ -129,157 +122,160 @@ if serialPort.IsOpen():
         time.sleep(2.0)
         while serialPort.serialport.in_waiting > 0:
             message = serialPort.serialport.read(serialPort.serialport.in_waiting).decode("utf-8", errors='ignore')
-            print(message)
             message = message.rstrip()
             if " Boot Menu " in message:
+                print(message)
                 start_time = time.time()
                 serialPort.Send_raw(" ")
-                f = open(config_file, 'r')
-                commands = f.readlines()
-                i = 0
-                for comm in commands:
-                    if comm.startswith("User Name:"):
-                        username = comm[10:].rstrip()
-                    elif comm.startswith("Password:"):
-                        passwd = comm[9:].rstrip()
-                        #commands[i]="New Password:\n"
-                    elif comm.startswith("IP:"):
-                        IP = comm[3:].rstrip()
-                    elif comm.startswith("Gateway:"):
-                        gateway = comm[8:].rstrip()
-                    elif comm.startswith("TFTP:"):
-                        TFTP = comm[5:].rstrip()
-                    elif comm.startswith("Bootloader Name:"):
-                        strarry = comm.rstrip().split(':')
-                        bootloader = strarry[1]
-                    elif comm.startswith("Firmware Name:"):
-                        firmware = comm[14:].rstrip()
-                    else:
-                        pass
-                    i += 1
-                f.close()
                 OnReceiveSerialData()
-                if bootloader:
-                    print("Set boot loader name")
-                    serialPort.Send_raw('m')
-                    backspace = bytearray([8 for i in range(50)])
-                    OnReceiveSerialData()
-                    serialPort.serialport.write(backspace)
-                    time.sleep(1.0)
-                    OnReceiveSerialData()
-                    serialPort.Send(bootloader)
-                    OnReceiveSerialData()
-                    serialPort.Send('y')
-                    OnReceiveSerialData()
-                print("Set Firmware name")
-                serialPort.Send_raw('n')
-                OnReceiveSerialData()
-                backspace = bytearray([8 for i in range(50)])
-                serialPort.serialport.write(backspace)
-                time.sleep(1.0)
-                OnReceiveSerialData()
-                serialPort.Send(firmware)
-                OnReceiveSerialData()
-                serialPort.Send('y')
-                OnReceiveSerialData()
-                print("Set TFTP server")
-                SetNetwork(IP,TFTP,gateway)
-                if bootloader:
-                    print("Updating bootloader ...")
-                    fail = True
-                    serialPort.Send_raw('j')
-                    while True:
-                        time.sleep(3.0)
-                        message = serialPort.serialport.read(serialPort.serialport.in_waiting)
-                        try:
-                            message = message.decode("utf-8", errors='ignore')
 
-                            #print(message)
-                            if "PROGRAM SUCCEEDED" in message:
-                                fail = False
-                                print("Updated bootloader")
-
-                            if "Please press any Enter to continue..." in message:
-                                serialPort.Send("")
-                                break
-                        except:
-                            print('decode error')
-
-                    if fail:
-                        print("Failed to flash bootloader!! Leave script!")
-                        serialPort.Close()
-                        sys.exit()
-
-                print("Updating Firmware ...")
-                fail = True
-                serialPort.Send_raw('k')
-                while True:
-                    time.sleep(2.0)
-                    message = serialPort.serialport.read(serialPort.serialport.in_waiting)
-                    try:
-                        message = message.decode("utf-8", errors='ignore')
-                        print(message, end='', flush=True)
-                        #print(message)
-                        if "FW PROGRAM NORMAL SUCCEEDED" in message:
-                            fail = False
-                        if "Please press Enter key to continue..." in message:
-                            print("Finished updated normal firmware")
-
-                            print("")
-                            serialPort.Send("")
-                            break
-                    except:
-                        print('decode error')
-                if fail:
-                    print("Failed to flash firmware!! Leave script!")
-                    sys.exit(0)
-                time.sleep(0.5)
-                serialPort.Send_raw('l')
-                backspace = bytearray([8 for i in range(5)])
-                serialPort.serialport.write(backspace)
-                time.sleep(0.5)
-                OnReceiveSerialData()
-                serialPort.Send('1')
-                time.sleep(0.5)
-                OnReceiveSerialData()
-                serialPort.Send('y')
-                OnReceiveSerialData()
-                time.sleep(0.5)
-                serialPort.Send_raw('k')
-                while True:
-                    time.sleep(2.0)
-                    message = serialPort.serialport.read(serialPort.serialport.in_waiting)
-                    try:
-                        message = message.decode("utf-8", errors='ignore')
-                        print(message, end='', flush=True)
-                        # print(message)
-                        if "FW PROGRAM FALLBACK SUCCEEDED" in message:
-                            fail = False
-                        if "Please press Enter key to continue..." in message:
-                            print("Finished updated fallback firmware")
-                            print("")
-                            serialPort.Send("")
-                            break
-                    except:
-                        print('decode error')
-                if fail:
-                    print("Failed to flash firmware!! Leave script!")
-                    sys.exit(0)
-                time.sleep(0.5)
-
-                serialPort.Send_raw('l')
-                backspace = bytearray([8 for i in range(5)])
-                serialPort.serialport.write(backspace)
-                time.sleep(0.5)
-                OnReceiveSerialData()
-                serialPort.Send('0')
-                time.sleep(0.5)
-                OnReceiveSerialData()
-                serialPort.Send('y')
-                OnReceiveSerialData()
-                time.sleep(0.5)
-                SetNetwork('172.31.30.102', '172.31.33.5', '172.31.0.1')
-                print("Convert to IN-001")
+                with open(config_file, 'r') as file:
+                    for comm in file.readlines():
+                        if comm.startswith("CMM Password:"):
+                            cmm_pwd = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Switch Password:"):
+                            passwd = comm.split(':')[1].rstrip()
+                        elif comm.startswith("IP:"):
+                            IP = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Gateway:"):
+                            gateway = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Change Value:"):
+                            ModelValue = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Place:"):
+                            SlotNumber = comm.split(':')[1].rstrip()
+                        elif comm.startswith("CMM IP:"):
+                            cmm_ip = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Board Product Name:"):
+                            FRU_fields['Board Product Name'] = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Product Name:"):
+                            FRU_fields['Product Name'] = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Product PartNum:"):
+                            FRU_fields['Product Part Number'] = comm.split(':')[1].rstrip()
+                        elif comm.startswith("Mask:"):
+                            mask = comm.split(':')[1].rstrip()
+                        else:
+                            pass
+                # if bootloader:
+                #     print("Set boot loader name")
+                #     serialPort.Send_raw('m')
+                #     backspace = bytearray([8 for i in range(50)])
+                #     OnReceiveSerialData()
+                #     serialPort.serialport.write(backspace)
+                #     time.sleep(1.0)
+                #     OnReceiveSerialData()
+                #     serialPort.Send(bootloader)
+                #     OnReceiveSerialData()
+                #     serialPort.Send('y')
+                #     OnReceiveSerialData()
+                # print("Set Firmware name")
+                # serialPort.Send_raw('n')
+                # OnReceiveSerialData()
+                # backspace = bytearray([8 for i in range(50)])
+                # serialPort.serialport.write(backspace)
+                # time.sleep(1.0)
+                # OnReceiveSerialData()
+                # serialPort.Send(firmware)
+                # OnReceiveSerialData()
+                # serialPort.Send('y')
+                # OnReceiveSerialData()
+                # print("Set TFTP server")
+                # SetNetwork(IP,TFTP,gateway)
+                # if bootloader:
+                #     print("Updating bootloader ...")
+                #     fail = True
+                #     serialPort.Send_raw('j')
+                #     while True:
+                #         time.sleep(3.0)
+                #         message = serialPort.serialport.read(serialPort.serialport.in_waiting)
+                #         try:
+                #             message = message.decode("utf-8", errors='ignore')
+                #
+                #             #print(message)
+                #             if "PROGRAM SUCCEEDED" in message:
+                #                 fail = False
+                #                 print("Updated bootloader")
+                #
+                #             if "Please press any Enter to continue..." in message:
+                #                 serialPort.Send("")
+                #                 break
+                #         except:
+                #             print('decode error')
+                #
+                #     if fail:
+                #         print("Failed to flash bootloader!! Leave script!")
+                #         serialPort.Close()
+                #         sys.exit()
+                #
+                # print("Updating Firmware ...")
+                # fail = True
+                # serialPort.Send_raw('k')
+                # while True:
+                #     time.sleep(2.0)
+                #     message = serialPort.serialport.read(serialPort.serialport.in_waiting)
+                #     try:
+                #         message = message.decode("utf-8", errors='ignore')
+                #         print(message, end='', flush=True)
+                #         #print(message)
+                #         if "FW PROGRAM NORMAL SUCCEEDED" in message:
+                #             fail = False
+                #         if "Please press Enter key to continue..." in message:
+                #             print("Finished updated normal firmware")
+                #
+                #             print("")
+                #             serialPort.Send("")
+                #             break
+                #     except:
+                #         print('decode error')
+                # if fail:
+                #     print("Failed to flash firmware!! Leave script!")
+                #     sys.exit(0)
+                # time.sleep(0.5)
+                # serialPort.Send_raw('l')
+                # backspace = bytearray([8 for i in range(5)])
+                # serialPort.serialport.write(backspace)
+                # time.sleep(0.5)
+                # OnReceiveSerialData()
+                # serialPort.Send('1')
+                # time.sleep(0.5)
+                # OnReceiveSerialData()
+                # serialPort.Send('y')
+                # OnReceiveSerialData()
+                # time.sleep(0.5)
+                # serialPort.Send_raw('k')
+                # while True:
+                #     time.sleep(2.0)
+                #     message = serialPort.serialport.read(serialPort.serialport.in_waiting)
+                #     try:
+                #         message = message.decode("utf-8", errors='ignore')
+                #         print(message, end='', flush=True)
+                #         # print(message)
+                #         if "FW PROGRAM FALLBACK SUCCEEDED" in message:
+                #             fail = False
+                #         if "Please press Enter key to continue..." in message:
+                #             print("Finished updated fallback firmware")
+                #             print("")
+                #             serialPort.Send("")
+                #             break
+                #     except:
+                #         print('decode error')
+                # if fail:
+                #     print("Failed to flash firmware!! Leave script!")
+                #     sys.exit(0)
+                # time.sleep(0.5)
+                #
+                # serialPort.Send_raw('l')
+                # backspace = bytearray([8 for i in range(5)])
+                # serialPort.serialport.write(backspace)
+                # time.sleep(0.5)
+                # OnReceiveSerialData()
+                # serialPort.Send('0')
+                # time.sleep(0.5)
+                # OnReceiveSerialData()
+                # serialPort.Send('y')
+                # OnReceiveSerialData()
+                # time.sleep(0.5)
+                # SetNetwork('172.31.30.102', '172.31.33.5', '172.31.0.1')
+                print("Converting the model")
                 serialPort.Send_raw('q')
                 OnReceiveSerialData()
                 time.sleep(1.0)
@@ -287,13 +283,13 @@ if serialPort.IsOpen():
                 while serialPort.serialport.in_waiting > 0:
                     message =serialPort.serialport.read(serialPort.serialport.in_waiting).decode("utf-8", errors='ignore')
                     print(message)
-                    if "u-boot>" in message:
+                    if "=>" in message:
                         break
                     time.sleep(1.0)
                 serialPort.Send("")
-                time.sleep(5.0)
+                time.sleep(2.0)
                 OnReceiveSerialData()
-                serialPort.Send("sys_eeprom set 0xfc B7-INDC")
+                serialPort.Send(f"sys_eeprom set 0x6E {ModelValue}")
                 OnReceiveSerialData()
                 time.sleep(1.0)
                 serialPort.Send("sys_eeprom write")
@@ -318,7 +314,24 @@ if serialPort.IsOpen():
                     message =serialPort.serialport.readline().decode("utf-8", errors='ignore')
                 time.sleep(5.0)
                 login(username, passwd)
-                new_passwd = ''
+                print("Setting networking IP")
+                serialPort.Send("c t")
+                OnReceiveSerialData()
+                time.sleep(1.0)
+                serialPort.Send(f"ip address {IP} {mask}")
+                OnReceiveSerialData()
+                #time.sleep(1.0)
+                serialPort.Send(f"ip gateway {gateway}")
+                OnReceiveSerialData()
+                #time.sleep(1.0)
+                serialPort.Send('ex')
+                OnReceiveSerialData()
+                serialPort.Send('write startup-config')
+                OnReceiveSerialData()
+                time.sleep(5.0)
+                # serialPort.Send_raw('y')
+                # OnReceiveSerialData()
+                # time.sleep(1.0)
                 serialPort.Send("show system information")
                 time.sleep(0.5)
                 serial_number = ''
@@ -331,14 +344,21 @@ if serialPort.IsOpen():
                         serial_number = m[0]
                     time.sleep(1.0)
                 serialPort.Send_raw('q')
+                write_log(serial_number, message)
                 OnReceiveSerialData()
                 serialPort.Send("show version")
                 time.sleep(1.0)
-
+                message = ''
                 while serialPort.serialport.in_waiting > 0:
                     message += serialPort.serialport.read(serialPort.serialport.in_waiting).decode("utf-8")
                     time.sleep(1.0)
-                write_log(serial_number, message)
+                print('Updating FRU information')
+                
+                for i in FRU_fields.keys():
+                    Write_FRU(cmm_ip, 'ADMIN', cmm_pwd, SlotNumber, i, FRU_fields[i])
+                time.sleep(20.0)
+                serialPort.serialport.reset_input_buffer()
+                serialPort.serialport.reset_output_buffer()
                 print(message + "\nUpdate Finshed!\nTotal time: %s seconds" % (time.time() - start_time))
 
 else:
