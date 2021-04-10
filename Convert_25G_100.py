@@ -108,18 +108,24 @@ def write_log(serial_number, message,ip):
         os.mkdir(log_dir)
 
     if os.name == 'posix':
-        file_name =log_dir + '/' + serial_number + '.log'
+        file_name =log_dir + '/' +'Convert_25G_100.csv'
     else:
-        file_name =log_dir + "\\" + serial_number + '.log'
-    if os.path.exists('Convert_25G_100.log'):
+        file_name =log_dir + "\\" + 'Convert_25G_100.csv'
+    if os.path.exists('Convert_25G_100.csv'):
         mode = 'a+'  # append if already exists
     else:
         mode = 'w+'  # make a new file if not
-    m = re.findall(r"Switch\s+Base\s+MAC\+Address\s+\:\s?(.*?)\n", message)
-    if m:
-        mac = m[0]
+    lines = message.split("\n")
+    mac = ''
+    for line in lines:
+        m = re.findall(r"Switch\s+Base\s+MAC\s+Address\s+\:\s?(.*?)$", line)
+
+        if m:
+            mac = m[0]
+            break
+    mac = mac.rstrip().lstrip()
     with open(file_name, mode) as f:
-        f.write("{}\t{}\t{}\t{}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), serial_number, mac),ip)
+        f.write("{}\t{}\t{}\t{}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), serial_number, mac,ip))
 
 OpenCommand()
 if serialPort.IsOpen():
@@ -350,7 +356,7 @@ if serialPort.IsOpen():
                         serial_number = m[0]
                     time.sleep(1.0)
                 serialPort.Send_raw('q')
-                write_log(serial_number, message,ip)
+                write_log(serial_number, message,IP)
                 OnReceiveSerialData()
                 serialPort.Send("show version")
                 time.sleep(1.0)
