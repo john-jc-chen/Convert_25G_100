@@ -99,7 +99,7 @@ def SetNetwork(IP, TFTP, Gateway):
     serialPort.Send("y")
     OnReceiveSerialData()
 
-def write_log(serial_number, message):
+def write_log(serial_number, message,ip):
     if os.name == 'posix':
         log_dir = os.getcwd() + '/log'
     else:
@@ -111,9 +111,15 @@ def write_log(serial_number, message):
         file_name =log_dir + '/' + serial_number + '.log'
     else:
         file_name =log_dir + "\\" + serial_number + '.log'
-
-    with open(file_name, 'w') as f:
-        f.write("{}\n {}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message))
+    if os.path.exists('Convert_25G_100.log'):
+        mode = 'a+'  # append if already exists
+    else:
+        mode = 'w+'  # make a new file if not
+    m = re.findall(r"Switch\s+Base\s+MAC\+Address\s+\:\s?(.*?)\n", message)
+    if m:
+        mac = m[0]
+    with open(file_name, mode) as f:
+        f.write("{}\t{}\t{}\t{}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), serial_number, mac),ip)
 
 OpenCommand()
 if serialPort.IsOpen():
@@ -344,7 +350,7 @@ if serialPort.IsOpen():
                         serial_number = m[0]
                     time.sleep(1.0)
                 serialPort.Send_raw('q')
-                write_log(serial_number, message)
+                write_log(serial_number, message,ip)
                 OnReceiveSerialData()
                 serialPort.Send("show version")
                 time.sleep(1.0)
