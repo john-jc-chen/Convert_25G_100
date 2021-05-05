@@ -1,13 +1,25 @@
 COM Port:COM6
+Switch Password:ADMIN
+
+[Convert Model: B8 to 25G-100, B9 XEM-100]
 CMM IP:172.31.34.18
 CMM Password:Super123
 Place:A2
 Change Value:B8
 Board Product Name:25G Ethernet Switch
+Board Part Num:BMB-25G-100A
 Product Name:25G Ethernet Switch
 Product PartNum:SBM-25G-100
-Switch Password:WXECJZNQIK
-IP:192.168.0.207
+
+[Optional - Update Firmware]
+Firmware Name:
+Bootloader Name:
+TFTP IP:
+IP (for downloading):
+Gateway (for downloading):
+
+[Optional - Set Fixed IP]
+IP:192.168.0.250
 Mask:255.255.255.0
 Gateway:192.168.0.1
 

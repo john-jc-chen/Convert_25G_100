@@ -1,0 +1,15 @@
+2020-07-22 11:51:29,169 : Programming 192.168.100.7 to CMM IP
+2020-07-22 11:52:23,872 : Programming 192.168.100.7 to CMM IP
+2020-07-22 11:53:06,515 : Programming 192.168.100.7 to CMM IP
+2020-07-22 11:53:09,928 : Failed running SMCIPMITool For input string: "cmm ip"
+
+2020-07-22 11:57:36,998 : Programming S218042X9820893 to A2
+2020-07-22 11:58:39,717 : Programming S218042X9820893 to A2
+2020-07-22 11:58:56,811 : Product serial number not found
+2020-07-22 14:04:45,996 : Programming S218042X9820893 to A2
+2020-07-22 14:06:44,200 : Programming S218042X9820893 to A2
+2020-07-22 14:10:13,716 : Programming S12345678 to A2
+2020-07-22 14:11:04,540 : Programming S12345678 to A2
+2020-07-22 14:11:21,307 : Program successfully in A2
+2020-07-22 14:14:55,009 : Programming S218042X9820893 to A2
+2020-07-22 14:15:11,928 : Program successfully in A2

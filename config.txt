@@ -1,0 +1,58 @@
+#For 3U chassis, on the chassis the location map is
+   CMM1    A1  A2
+
+#For 4U chassis, on the chassis the location is
+   A1  CMM1    A2
+
+#For 8U chassis, on the chassis the location is
+   A1  CMM1    A2
+   B1  CMM2    B2
+
+#Please Enter CMM IP, User name and password
+CMM IP:172.31.48.99
+CMM User Name:ADMIN
+CMM Password:ADMIN
+
+
+#The number of the field name:
+# 1. Product Serial Number
+# 2. Product Part Number
+# 3. Product Name
+# 4. Board Serial Number
+# 5. Board Part Number
+# 6. Board Product Name
+# 7. Product Version
+#For Example:
+#A1
+#1:
+
+#Leave blank if there is no device at the location
+#Leave blank if you don't want to update FRU at that location
+#Enter CMM product serial number if you want to update CMM FRU information. Otherwise, leave it blank.
+
+A1 Field:
+A1 Value:
+
+
+A2 Field:
+A2 Value:
+
+B1 Field:
+B1 Value:
+
+B2 Field:
+B2 Value:
+B2 Field:
+B2 Value:
+
+MidPlane Field:1
+MidPlane Value:GB191S004711
+
+
+
+		
+
+
+CMM Field:
+CMM Value:
+
